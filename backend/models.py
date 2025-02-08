@@ -50,3 +50,20 @@ class Score(Base):
 
     contestant = relationship("Contestant", back_populates="scores")
     game = relationship("Game", back_populates="scores")
+
+
+class GameSession(Base):
+    __tablename__ = "game_sessions"
+    id = Column(Integer, primary_key=True)
+    game_id = Column(Integer, ForeignKey("games.id"))
+    contestant_id = Column(Integer, ForeignKey("contestants.id"))
+    start_time = Column(DateTime, default=func.now())
+    end_time = Column(DateTime, nullable=True)
+    session_length = Column(Integer, nullable=True)  # in minutes
+
+class GameUpvote(Base):
+    __tablename__ = "game_upvotes"
+    id = Column(Integer, primary_key=True)
+    game_id = Column(Integer, ForeignKey("games.id"))
+    contestant_id = Column(Integer, ForeignKey("contestants.id"))
+    timestamp = Column(DateTime, default=func.now())

@@ -82,6 +82,24 @@ class APIService {
       method: "PUT",
     });
   }
+
+  static async getContestants() {
+    return this.fetchWithAuth("/contestants/");
+  }
+
+  static async createContestant(contestantData) {
+    return this.fetchWithAuth("/contestants/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(contestantData),
+    });
+  }
+
+  static async deleteContestant(contestantId) {
+    return this.fetchWithAuth(`/contestants/${contestantId}`, {
+      method: "DELETE",
+    });
+  }
 }
 
 // Game Manager
@@ -136,7 +154,7 @@ class GameManager {
         `;
   }
 
-  static selectGame(gameId, gameName) {
+  static selectGame(gameId) {
     document.querySelector('select[name="game_id"]').value = gameId;
     document.querySelector('input[name="score"]').focus();
   }
@@ -170,7 +188,7 @@ class GameManager {
 
     try {
       await APIService.submitScore({
-        contestant_id: parseInt(localStorage.getItem("contestant_id")),
+        contestant_id: parseInt(formData.get("contestant_id")),
         game_id: parseInt(formData.get("game_id")),
         score: parseFloat(formData.get("score")),
       });
@@ -269,6 +287,87 @@ class PopularityDashboard {
   }
 }
 
+// Contest Manager
+class ContestManager {
+  static async loadContestants() {
+    try {
+      const contestants = await APIService.getContestants();
+      this.updateContestantsUI(contestants);
+    } catch (error) {
+      UIComponent.showError(error.detail || "Failed to load contestants");
+    }
+  }
+
+  static updateContestantsUI(contestants) {
+    const container = document.querySelector("#contestantsList");
+    if (container) {
+      container.innerHTML = contestants
+        .map(
+          (contestant) => `
+              <tr>
+                  <td>${contestant.name}</td>
+                  <td>${contestant.email}</td>
+                  <td>${new Date(contestant.created_at).toLocaleString()}</td>
+                  <td>
+                      <button class="btn btn-sm btn-danger"
+                              onclick="ContestManager.deleteContestant(${contestant.id})">
+                          Delete
+                      </button>
+                  </td>
+              </tr>
+          `,
+        )
+        .join("");
+    }
+
+    // Update contestant select dropdowns
+    const selects = document.querySelectorAll('select[name="contestant_id"]');
+    const options = contestants
+      .map(
+        (contestant) => `
+          <option value="${contestant.id}">${contestant.name}</option>
+      `,
+      )
+      .join("");
+
+    selects.forEach((select) => {
+      select.innerHTML = `
+          <option value="">Select Contestant</option>
+          ${options}
+      `;
+    });
+  }
+
+  static async createContestant(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+
+    try {
+      await APIService.createContestant({
+        name: formData.get("name"),
+        email: formData.get("email"),
+      });
+
+      UIComponent.showSuccess("Contestant created successfully!");
+      event.target.reset();
+      this.loadContestants();
+    } catch (error) {
+      UIComponent.showError(error.detail || "Failed to create contestant");
+    }
+  }
+
+  static async deleteContestant(contestantId) {
+    if (!confirm("Are you sure you want to delete this contestant?")) return;
+    try {
+      await APIService.deleteContestant(contestantId);
+      UIComponent.showSuccess("Contestant deleted successfully");
+      this.loadContestants();
+    } catch (error) {
+      UIComponent.showError(error.detail || "Failed to delete contestant");
+    }
+  }
+}
+
 // Logout function
 function logout() {
   localStorage.removeItem("authToken");
@@ -284,6 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   GameManager.loadActiveGames();
   GameManager.loadRecentScores();
+  ContestManager.loadContestants();
   setInterval(() => GameManager.loadRecentScores(), CONFIG.REFRESH_INTERVAL);
 
   // Initialize popularity tab
@@ -319,3 +419,18 @@ document.addEventListener("DOMContentLoaded", () => {
     .querySelector("#scoreForm")
     .addEventListener("submit", (e) => GameManager.submitGameScore(e));
 });
+
+function updateGamePopularity() {
+  const refreshBadge = document.querySelector(".refresh-badge");
+  refreshBadge.classList.add("refreshing");
+
+  fetch("/games/popularity")
+    .then((response) => response.json())
+    .then((data) => {
+      displayPopularityData(data);
+      setTimeout(() => refreshBadge.classList.remove("refreshing"), 500);
+    });
+}
+
+// Set 5-minute refresh
+setInterval(updateGamePopularity, 300000);

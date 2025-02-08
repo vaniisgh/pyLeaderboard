@@ -1,3 +1,4 @@
+from operator import mod
 from fastapi import FastAPI, HTTPException, Depends, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -15,6 +16,7 @@ from jwt.exceptions import InvalidTokenError
 
 from . import models, schemas
 from .database import engine, get_db
+from .utils import calculate_popularity_score
 
 # App Configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -84,6 +86,21 @@ def create_contestant(contestant: schemas.ContestantCreate, db: Session = Depend
 @app.get("/contestants/", response_model=List[schemas.ContestantResponse])
 def get_contestants(db: Session = Depends(get_db)):
     return db.query(models.Contestant).all()
+
+@app.delete("/contestants/{contestant_id}")
+def delete_contestant(contestant_id: int, db: Session = Depends(get_db)):
+    contestant = db.query(models.Contestant).filter(models.Contestant.id == contestant_id).first()
+    if not contestant:
+        raise HTTPException(status_code=404, detail="Contestant not found")
+
+    try:
+        db.delete(contestant)
+        db.commit()
+        return {"message": "Contestant deleted successfully"}
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Cannot delete contestant with existing scores")
+
 
 @app.post("/games/", response_model=schemas.GameResponse)
 def create_game(game: schemas.GameCreate, db: Session = Depends(get_db)):
@@ -171,6 +188,52 @@ async def get_games_popularity(db: Session = Depends(get_db)):
     # Sort by popularity score
     games_stats.sort(key=lambda x: x["popularity_score"], reverse=True)
     return games_stats
+
+@app.get("/games/{game_id}/popularity")
+async def get_game_popularity(game_id: int, db: Session = Depends(get_db)):
+    now = datetime.utcnow()
+    yesterday = now - timedelta(days=1)
+
+    # w1: Players yesterday
+    daily_players = db.query(func.count(distinct(models.GameSession.contestant_id))).filter(
+        models.GameSession.game_id == game_id,
+        models.GameSession.start_time >= yesterday
+    ).scalar()
+
+    # w2: Current players
+    current_players = db.query(func.count(distinct(models.GameSession.contestant_id))).filter(
+        models.GameSession.game_id == game_id,
+        models.GameSession.start_time <= now,
+        or_(models.GameSession.end_time == None, models.GameSession.end_time >= now)
+    ).scalar()
+
+    # w3: Total upvotes
+    upvotes = db.query(func.count(models.GameUpvote.id)).filter(
+        models.GameUpvote.game_id == game_id
+    ).scalar()
+
+    # Calculate normalized score
+    return calculate_popularity_score(daily_players, current_players, upvotes)
+
+@app.post("/games/{game_id}/join")
+async def join_game(game_id: int, contestant_id: int, db: Session = Depends(get_db)):
+    session = models.GameSession(game_id=game_id, contestant_id=contestant_id)
+    db.add(session)
+    db.commit()
+    return {"message": "Joined game successfully"}
+
+@app.post("/games/{game_id}/leave")
+async def leave_game(game_id: int, contestant_id: int, db: Session = Depends(get_db)):
+    session = db.query(models.GameSession).filter(
+        models.GameSession.game_id == game_id,
+        models.GameSession.contestant_id == contestant_id,
+        models.GameSession.end_time == None
+    ).first()
+    if session:
+        session.end_time = datetime.utcnow()
+        session.session_length = (session.end_time - session.start_time).seconds // 60
+        db.commit()
+    return {"message": "Left game successfully"}
 
 @app.put("/games/{game_id}/start")
 def start_game(game_id: int, db: Session = Depends(get_db)):
