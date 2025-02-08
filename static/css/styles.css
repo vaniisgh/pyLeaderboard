@@ -1,0 +1,112 @@
+.leaderboard-table th {
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+}
+
+.leaderboard-row:nth-child(even) {
+    background-color: var(--bs-dark-bg-subtle);
+}
+
+.form-container {
+    background-color: var(--bs-dark-bg-subtle);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.nav-tabs .nav-link {
+    color: var(--bs-light);
+}
+
+.nav-tabs .nav-link.active {
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+    border-color: var(--bs-dark);
+}
+
+.error-message {
+    color: var(--bs-danger);
+    margin-top: 5px;
+}
+
+.success-message {
+    color: var(--bs-success);
+    margin-top: 5px;
+}
+
+/* Add to GameLeadertrack/static/css/styles.css */
+
+.popularity-card {
+    background-color: var(--bs-dark-bg-subtle);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: transform 0.2s;
+}
+
+.popularity-card:hover {
+    transform: translateY(-2px);
+}
+
+.popularity-metric {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--bs-primary);
+}
+
+.trend-up {
+    color: var(--bs-success);
+}
+
+.trend-down {
+    color: var(--bs-danger);
+}
+
+.popularity-score {
+    font-size: 1.5em;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.game-status {
+    font-size: 0.9em;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.game-status.active {
+    background-color: var(--bs-success);
+    color: white;
+}
+
+.game-status.inactive {
+    background-color: var(--bs-danger);
+    color: white;
+}
+
+.refresh-badge {
+    display: flex;
+    justify-content: flex-end;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+}
+
+.refresh-badge i {
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.refresh-badge.refreshing i {
+    animation-duration: 0.5s;
+}

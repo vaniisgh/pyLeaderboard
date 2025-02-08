@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Game Score Dashboard</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link href="/static/css/styles.css" rel="stylesheet" />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body>
+        <div class="container py-4">
+            <div id="header"></div>
+            <div id="alerts"></div>
+
+            <ul class="nav nav-tabs mb-4">
+                <li class="nav-item">
+                    <a
+                        class="nav-link active"
+                        data-bs-toggle="tab"
+                        href="#dashboard"
+                        >Dashboard</a
+                    >
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#popularity"
+                        >Game Popularity</a
+                    >
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="dashboard">
+                    <div class="row">
+                        <!-- Active Games Panel -->
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        Active Games
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="activeGames" class="list-group">
+                                        <!-- Active games will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Score Submission Panel -->
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        Submit Score
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <form
+                                        id="scoreForm"
+                                        onsubmit="submitGameScore(event)"
+                                    >
+                                        <div class="mb-3">
+                                            <label class="form-label"
+                                                >Game</label
+                                            >
+                                            <select
+                                                name="game_id"
+                                                class="form-select"
+                                                required
+                                            >
+                                                <option value="">
+                                                    Select Game
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label"
+                                                >Score</label
+                                            >
+                                            <input
+                                                type="number"
+                                                name="score"
+                                                class="form-control"
+                                                placeholder="Enter your score"
+                                                required
+                                                step="0.01"
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary"
+                                        >
+                                            Submit Score
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Recent Scores -->
+                            <div class="card mt-4">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        Recent Scores
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Game</th>
+                                                <th>Score</th>
+                                                <th>Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentScores">
+                                            <!-- Recent scores will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="popularity">
+                    <div class="row">
+                        <div class="col-12">
+                            <h2>Game Popularity Index</h2>
+                            <div id="popularityContent">
+                                <!-- Popularity content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/static/js/game_dashboard.js"></script>
+    </body>
+</html>
